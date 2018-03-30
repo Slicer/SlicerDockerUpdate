@@ -76,5 +76,3 @@ echo "$NOW - Pushing SlicerDocker images" # >> $logfile
 make push-all #  >> $logfile 2>&1
 popd > /dev/null
 
-#------------------------------------------------------------------------------
-$slicer_docker_dir/remove-dangling-images.sh
