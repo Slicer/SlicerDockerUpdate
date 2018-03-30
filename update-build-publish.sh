@@ -1,78 +1,58 @@
 #!/bin/bash
 
-set -ex
+set -eo pipefail
 
 export PATH=/usr/bin:$PATH
 
 script_dir=$(cd $(dirname $(readlink -f "$0")) || exit 1; pwd)
 slicer_dir=$script_dir/Slicer
 slicer_docker_dir=$script_dir/SlicerDocker
-# logfile=$script_dir/lastupdate-log.txt
 
-# Sanity checks
-if [[ ! -d $slicer_dir ]]; then
-  echo "Slicer directory not found [$slicer_dir]"
+function report {
+  NOW=$(date +'%T %D')
+  echo "--------------------------------------------------------------------------------"
+  echo "$NOW - $1"
+  echo "--------------------------------------------------------------------------------"
+}
+
+function die {
+  echo $1
   exit 1
+}
+
+[[ ! -d $slicer_dir ]] && die "Slicer directory not found [$slicer_dir]"
+[[ ! -d $slicer_docker_dir ]] && die "SlicerDocker directory not found [$slicer_docker_dir]"
+
+report "Pulling Slicer changes [$slicer_dir]"
+#report "HOME: $HOME - USER: $USER - LOGNAME:$LOGNAME - SSH_AGENT_PID:$SSH_AGENT_PID - SSH_AUTH_SOCK:$SSH_AUTH_SOCK"
+cd $slicer_dir
+git checkout master
+git reset --hard git-svn
+git svn rebase
+
+
+report "Pulling SlicerDocker changes into [$slicer_docker_dir]"
+cd $slicer_docker_dir
+git reset --hard HEAD
+git checkout master
+git fetch origin
+git reset --hard origin/master
+
+report "Update SlicerDocker [$slicer_docker_dir/slicer-base/update.sh $slicer_dir]"
+$slicer_docker_dir/slicer-base/update.sh $slicer_dir
+
+report "Build docker images from [$slicer_docker_dir]"
+cd $slicer_docker_dir
+make build-all
+make push-all
+
+report "Pushing SlicerDocker changes [$slicer_docker_dir]"
+# ... but if there is no token, bail
+if [[ "$SLICERDOCKER_GITHUB_TOKEN" == "" ]]; then
+  echo "-> Skipping SlicerDocker repository update: SLICERDOCKER_GITHUB_TOKEN env. variable is not set"
+  exit 0
 fi
-if [[ ! -d $slicer_docker_dir ]]; then
-  echo "SlicerDocker directory not found [$slicer_docker_dir]"
-  exit 1
-fi
-
-NOW=$(date +'%T %D')
-
-# rm -f $logfile
-
-#------------------------------------------------------------------------------
-echo "" #  >> $logfile
-echo "$NOW - Pulling Slicer changes" #  >> $logfile
-#echo "HOME: $HOME - USER: $USER - LOGNAME:$LOGNAME -
-#SSH_AGENT_PID:$SSH_AGENT_PID - SSH_AUTH_SOCK:$SSH_AUTH_SOCK" >> $logfile
-pushd $slicer_dir > /dev/null
-(git checkout master &&
-  git reset --hard git-svn &&
-  git svn rebase) #  >> $logfile 2>&1
-popd > /dev/null
-
-#------------------------------------------------------------------------------
-echo "" #  >> $logfile
-echo "$NOW - Pulling SlicerDocker changes" #  >> $logfile
-pushd $slicer_docker_dir > /dev/null
-(git reset --hard HEAD &&
-  git checkout master &&
-  git fetch origin &&
-  git reset --hard origin/master) # >> $logfile 2>&1
-popd > /dev/null
-
-#------------------------------------------------------------------------------
-pushd $slicer_docker_dir > /dev/null
-
-echo "" # >> $logfile
-echo "$NOW - Update SlicerDocker" #  >> $logfile
-./slicer-base/update.sh $slicer_dir #  >> $logfile 2>&1
-
-echo "" # >> $logfile
-echo "$NOW - Build docker images" # >> $logfile
-make build-all # >> $logfile 2>&1
-
-popd > /dev/null
-
-#------------------------------------------------------------------------------
-echo "" # >> $logfile
-echo "$NOW - Pushing SlicerDocker changes" #  >> $logfile
-pushd $slicer_docker_dir > /dev/null
-if [[ $SLICERDOCKER_GITHUB_TOKEN ]]; then
-  remote=https://${SLICERDOCKER_GITHUB_TOKEN}@github.com/thewtex/SlicerDocker.git
-  git push $remote master > /dev/null 2>&1 #  >> $logfile 2>&1
-else
-  echo "Skipping SlicerDocker update: SLICERDOCKER_GITHUB_TOKEN env. variable is not set" # >> $logfile
-fi
-popd > /dev/null
-
-#------------------------------------------------------------------------------
-pushd $slicer_docker_dir > /dev/null
-echo "" # >> $logfile
-echo "$NOW - Pushing SlicerDocker images" # >> $logfile
-make push-all #  >> $logfile 2>&1
-popd > /dev/null
+cd $slicer_docker_dir
+remote=https://${SLICERDOCKER_GITHUB_TOKEN}@github.com/thewtex/SlicerDocker.git
+git push $remote master > /dev/null 2>&1
 
