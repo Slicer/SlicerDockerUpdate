@@ -43,8 +43,8 @@ $slicer_docker_dir/slicer-base/update.sh $slicer_dir
 
 report "Build docker images from [$slicer_docker_dir]"
 cd $slicer_docker_dir
-make build-all
-make push-all
+make slicer-base
+make slicer-base.push
 
 report "Pushing SlicerDocker changes [$slicer_docker_dir]"
 # ... but if there is no token, bail
