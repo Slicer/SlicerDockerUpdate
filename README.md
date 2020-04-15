@@ -8,7 +8,7 @@ These scripts allow to:
 References
 ----------
 
-* https://github.com/thewtex/SlicerDocker
+* https://github.com/Slicer/SlicerDocker
 * https://hub.docker.com/u/slicer/
 
 
