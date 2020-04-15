@@ -26,9 +26,10 @@ function die {
 report "Pulling Slicer changes [$slicer_dir]"
 #report "HOME: $HOME - USER: $USER - LOGNAME:$LOGNAME - SSH_AGENT_PID:$SSH_AGENT_PID - SSH_AUTH_SOCK:$SSH_AUTH_SOCK"
 cd $slicer_dir
+git reset --hard HEAD
 git checkout master
-git reset --hard git-svn
-git svn rebase
+git fetch origin
+git reset --hard origin/master
 
 
 report "Pulling SlicerDocker changes into [$slicer_docker_dir]"
