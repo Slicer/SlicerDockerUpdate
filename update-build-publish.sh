@@ -54,6 +54,6 @@ if [[ "$SLICERDOCKER_GITHUB_TOKEN" == "" ]]; then
   exit 0
 fi
 cd $slicer_docker_dir
-remote=https://${SLICERDOCKER_GITHUB_TOKEN}@github.com/thewtex/SlicerDocker.git
+remote=https://${SLICERDOCKER_GITHUB_TOKEN}@github.com/Slicer/SlicerDocker.git
 git push $remote master > /dev/null 2>&1
 
