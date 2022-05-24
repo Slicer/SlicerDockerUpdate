@@ -15,14 +15,14 @@ slicerdocker_dir=$script_dir/SlicerDocker
 # Check Slicer sources
 #
 if [[ ! -d $slicer_dir ]];  then
-  git clone git://github.com/Slicer/Slicer $slicer_dir
+  git clone https://github.com/Slicer/Slicer $slicer_dir
 fi
 
 #
 # Checkout SlicerDocker sources
 #
 if [[ ! -d $slicerdocker_dir ]]; then
-  git clone git://github.com/Slicer/SlicerDocker $slicerdocker_dir
+  git clone https://github.com/Slicer/SlicerDocker $slicerdocker_dir
 fi
 
 #

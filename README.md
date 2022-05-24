@@ -18,7 +18,7 @@ Usage
 1. Download scripts
 
 ```
-git clone git://github.com/Slicer/SlicerDockerUpdate
+git clone https://github.com/Slicer/SlicerDockerUpdate
 ```
 
 2. Configure GitHub token used to update Slicer revision
