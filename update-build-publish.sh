@@ -4,11 +4,7 @@ set -eo pipefail
 
 # Ensure an recent version of git is used the official Slicer build machine
 # See https://github.com/Slicer/DashboardScripts/blob/main/metroplex.sh
-if [[ -f /home/kitware/.nix-profile/etc/profile.d/nix.sh ]]; then
-  source /home/kitware/.nix-profile/etc/profile.d/nix.sh
-else
-  export PATH=/usr/bin:$PATH
-fi
+export PATH=/usr/bin:$PATH
 
 script_dir=$(cd $(dirname $(readlink -f "$0")) || exit 1; pwd)
 slicer_dir=$script_dir/Slicer
