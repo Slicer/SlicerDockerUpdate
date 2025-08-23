@@ -58,4 +58,3 @@ fi
 cd $slicer_docker_dir
 remote=https://${SLICERDOCKER_GITHUB_TOKEN}@github.com/Slicer/SlicerDocker.git
 git push $remote main > /dev/null 2>&1
-
