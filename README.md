@@ -1,8 +1,16 @@
 # SlicerDockerUpdate
 
-These scripts allow to:
-* update the Slicer revision associated with the docker images
-* build and publish the docker images
+This repository automates keeping the
+[SlicerDocker](https://github.com/Slicer/SlicerDocker) images in sync with the
+[Slicer](https://github.com/Slicer/Slicer) source tree.
+
+It provides:
+
+- Scripts to update the Slicer revision used in the Docker images.
+- A GitHub Actions workflow to build and publish the images to Docker Hub.
+- Legacy cron-based scripts for manual/server-side scheduling.
+
+Published images are available on [Docker Hub](https://hub.docker.com/u/slicer/).
 
 ## References
 
@@ -10,6 +18,24 @@ These scripts allow to:
 * https://hub.docker.com/u/slicer/
 
 ## Usage
+
+### Automated (preferred)
+
+The `Build and Publish` workflow in this repository is scheduled to run
+daily at **04:30 UTC**, roughly 30 minutes after the
+[`update-slicer-preview-branch`](https://github.com/Slicer/Slicer/blob/main/.github/workflows/update-slicer-preview-branch.yml)
+workflow in the Slicer repository publishes the `nightly-main` branch.
+
+You can also trigger the workflow manually from the GitHub UI with two inputs:
+
+- `slicer_ref`: The Slicer branch or ref to build from (default: `nightly-main`).
+- `force_build`: If `true`, rebuild and publish even if no changes were detected
+  in SlicerDocker.
+
+### Legacy scripts (manual/cron)
+
+As an alternative to GitHub Actions, the original scripts can still be
+used to run updates manually or with `cron`.
 
 1. Download scripts
 

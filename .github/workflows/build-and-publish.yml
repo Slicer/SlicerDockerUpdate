@@ -1,0 +1,143 @@
+name: Build and Publish
+
+on:
+  schedule:
+    # Daily at 04:30 UTC (~90 min after the start time defined in Slicer/CTestConfig.cmake).
+    #
+    # Runs ~30 min after the "update-slicer-preview-branch" workflow in the Slicer
+    # repository, to ensure the "nightly-main" branch is published before this job starts.
+    #
+    # See https://github.com/Slicer/Slicer/blob/main/.github/workflows/update-slicer-preview-branch.yml
+    - cron: "30 4 * * *"
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      slicer_ref:
+        description: "Branch/ref of Slicer to use"
+        default: "nightly-main"
+        required: true
+      force_build:
+        description: "Build & publish even if no changes detected"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: slicer-docker-update-${{ github.event_name == 'workflow_dispatch' && inputs.slicer_ref || 'nightly-main' }}
+  cancel-in-progress: true
+
+jobs:
+  update-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout this repo (SlicerDockerUpdate)
+        uses: actions/checkout@v5
+
+      - name: Checkout Slicer
+        uses: actions/checkout@v5
+        with:
+          repository: Slicer/Slicer
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.slicer_ref || 'nightly-main' }}
+          path: Slicer
+          fetch-depth: 0
+
+      - uses: actions/create-github-app-token@0f859bf9e69e887678d5bbfbee594437cb440ffe # v2.1.0
+        id: app-token
+        with:
+          app-id: ${{ vars.SLICER_APP_ID }}
+          private-key: ${{ secrets.SLICER_APP_PRIVATE_KEY }}
+          owner: Slicer
+          repositories: |
+            SlicerDocker
+
+      - name: Get GitHub App User ID
+        id: get-user-id
+        run: echo "user-id=$(gh api "/users/${{ steps.app-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+
+      - name: Configure git CLI for the GitHub App bot user
+        run: |
+          git config --global user.name '${{ steps.app-token.outputs.app-slug }}[bot]'
+          git config --global user.email '${{ steps.get-user-id.outputs.user-id }}+${{ steps.app-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+
+      - name: Checkout SlicerDocker
+        uses: actions/checkout@v5
+        with:
+          repository: Slicer/SlicerDocker
+          path: SlicerDocker
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+
+      - name: Update SlicerDocker and commit changes (if any)
+        id: update-slicerdocker
+        working-directory: SlicerDocker
+        run: |
+          set -euo pipefail
+
+          slicer_dir="${{ github.workspace }}/Slicer"
+
+          git status --porcelain
+          before=$(git rev-parse HEAD)
+
+          ./slicer-base/update.sh "$slicer_dir"
+
+          after=$(git rev-parse HEAD)
+          git status --porcelain
+
+          updated=$([[ "$before" != "$after" ]] && echo "true" || echo "false")
+          echo "updated=$updated" >> "$GITHUB_OUTPUT"
+
+      - name: Decide if we should build
+        id: decide
+        run: |
+          SHOULD_BUILD="${{ steps.update-slicerdocker.outputs.updated == 'true' || (github.event_name == 'workflow_dispatch' && inputs.force_build == 'true') }}"
+          echo "should_build=$SHOULD_BUILD" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        if: steps.decide.outputs.should_build == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build images (make slicer-base)
+        if: steps.decide.outputs.should_build == 'true'
+        working-directory: SlicerDocker
+        run: |
+          make slicer-base
+
+      - name: Login to Docker Hub
+        if: steps.decide.outputs.should_build == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ vars.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push image (make slicer-base.push)
+        if: steps.decide.outputs.should_build == 'true'
+        working-directory: SlicerDocker
+        run: |
+          make slicer-base.push
+
+      # Only rebase & push when the repo actually changed.
+      # NOTE: We DO NOT push on `force_build` because the intent is to rebuild/publish
+
+      - name: Rebase onto upstream branch before push
+        if: steps.update-slicerdocker.outputs.updated == 'true'
+        working-directory: SlicerDocker
+        run: |
+          set -euo pipefail
+          git fetch origin
+          branch=$(git branch --show-current)
+          # Rebase the currently checked-out branch onto its upstream (origin/<branch>)
+          git merge --ff-only origin/$branch
+
+      - name: Push SlicerDocker changes
+        if: steps.update-slicerdocker.outputs.updated == 'true'
+        working-directory: SlicerDocker
+        run: |
+          branch=$(git branch --show-current)
+          git push origin $branch
+
