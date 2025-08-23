@@ -1,5 +1,7 @@
 # SlicerDockerUpdate
 
+[![Actions Status][actions-badge]][actions-link]
+
 This repository automates keeping the
 [SlicerDocker](https://github.com/Slicer/SlicerDocker) images in sync with the
 [Slicer](https://github.com/Slicer/Slicer) source tree.
@@ -67,3 +69,8 @@ used to run updates manually or with `cron`.
 It is covered by the Apache License, Version 2.0:
 
 http://www.apache.org/licenses/LICENSE-2.0
+
+<!-- prettier-ignore-start -->
+[actions-badge]:            https://github.com/Slicer/SlicerDockerUpdate/actions/workflows/build-and-publish.yml/badge.svg?branch=main
+[actions-link]:             https://github.com/Slicer/SlicerDockerUpdate/actions/workflows/build-and-publish.yml
+<!-- prettier-ignore-end -->
