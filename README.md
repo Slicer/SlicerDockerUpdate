@@ -1,47 +1,42 @@
-SlicerDockerUpdate
-==================
+# SlicerDockerUpdate
 
 These scripts allow to:
 * update the Slicer revision associated with the docker images
 * build and publish the docker images
 
-References
-----------
+## References
 
 * https://github.com/Slicer/SlicerDocker
 * https://hub.docker.com/u/slicer/
 
-
-Usage
------
+## Usage
 
 1. Download scripts
 
-```
-git clone https://github.com/Slicer/SlicerDockerUpdate
-```
+  ```
+  git clone https://github.com/Slicer/SlicerDockerUpdate
+  ```
 
 2. Configure GitHub token used to update Slicer revision
 
-```
-cd SlicerDockerUpdate
-echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" > SLICERDOCKER_GITHUB_TOKEN
-```
+  ```
+  cd SlicerDockerUpdate
+  echo "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" > SLICERDOCKER_GITHUB_TOKEN
+  ```
 
 3. Initialize
 
-```
-./setup.sh
-```
+  ```
+  ./setup.sh
+  ```
 
 4. Add a crontab entry
 
-```
-0 21 * * * /bin/bash /home/kitware/Packaging/SlicerDockerUpdate/cronjob.sh >/home/kitware/Packaging/SlicerDockerUpdate/cronjob-log.txt 2>&1
-```
+  ```
+  0 21 * * * /bin/bash /home/kitware/Packaging/SlicerDockerUpdate/cronjob.sh >/home/kitware/Packaging/SlicerDockerUpdate/cronjob-log.txt 2>&1
+  ```
 
-License
--------
+## License
 
 It is covered by the Apache License, Version 2.0:
 
