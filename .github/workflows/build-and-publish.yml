@@ -157,4 +157,3 @@ jobs:
         run: |
           branch=$(git branch --show-current)
           git push origin $branch
-
