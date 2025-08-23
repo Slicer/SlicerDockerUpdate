@@ -23,7 +23,7 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: read # push uses GitHub App token, not the default GITHUB_TOKEN
 
 concurrency:
   group: slicer-docker-update-${{ github.event_name == 'workflow_dispatch' && inputs.slicer_ref || 'nightly-main' }}
@@ -71,7 +71,7 @@ jobs:
           repository: Slicer/SlicerDocker
           path: SlicerDocker
           fetch-depth: 0
-          token: ${{ steps.app-token.outputs.token }}
+          persist-credentials: false
 
       - name: Update SlicerDocker and commit changes (if any)
         id: update-slicerdocker
@@ -121,8 +121,25 @@ jobs:
         run: |
           make slicer-base.push
 
-      # Only rebase & push when the repo actually changed.
-      # NOTE: We DO NOT push on `force_build` because the intent is to rebuild/publish
+      # Only update SlicerDocker when changes are detected.
+      # Note: we refresh the GitHub App token here because tokens expire after 1 hour.
+
+      - uses: actions/create-github-app-token@0f859bf9e69e887678d5bbfbee594437cb440ffe # v2.1.0
+        id: push-token
+        with:
+          app-id: ${{ vars.SLICER_APP_ID }}
+          private-key: ${{ secrets.SLICER_APP_PRIVATE_KEY }}
+          owner: Slicer
+          repositories: |
+            SlicerDocker
+
+      - name: Prepare push credentials for SlicerDocker
+        if: steps.update-slicerdocker.outputs.updated == 'true'
+        working-directory: SlicerDocker
+        env:
+          APP_TOKEN: ${{ steps.push-token.outputs.token }}
+        run: |
+          git remote set-url origin https://x-access-token:${APP_TOKEN}@github.com/Slicer/SlicerDocker.git
 
       - name: Rebase onto upstream branch before push
         if: steps.update-slicerdocker.outputs.updated == 'true'
