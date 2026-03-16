@@ -45,7 +45,7 @@ jobs:
           path: Slicer
           fetch-depth: 0
 
-      - uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
         id: app-token
         with:
           app-id: ${{ vars.SLICER_APP_ID }}
@@ -124,7 +124,7 @@ jobs:
       # Only update SlicerDocker when changes are detected.
       # Note: we refresh the GitHub App token here because tokens expire after 1 hour.
 
-      - uses: actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf # v2.2.1
+      - uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859 # v3.0.0
         id: push-token
         with:
           app-id: ${{ vars.SLICER_APP_ID }}
